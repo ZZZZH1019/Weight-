@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>体重管理</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --primary: #2563eb;
+      --primary-soft: rgba(37, 99, 235, 0.1);
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --tab-height: 70px;
+      --radius: 18px;
+      --cell-bg: #ffffff;
+      --cell-border: #e5e7eb;
+      --chart-morning: #2563eb;
+      --chart-evening: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(37, 99, 235, 0.08), transparent 35%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding-bottom: calc(var(--tab-height) + env(safe-area-inset-bottom));
+    }
+
+    .app {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 16px 24px;
+      flex: 1;
+      height: auto;
+      overflow-y: auto;
+    }
+
+    .page {
+      display: none;
+      background: var(--panel);
+      border: 1px solid rgba(229, 231, 235, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      min-height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .page.is-active {
+      display: block;
+    }
+
+    .page h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    /* Calendar styles */
+    .calendar-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      min-height: 0;
+    }
+
+    .calendar {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .month-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .weekday {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .calendar-cell {
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      padding: 6px;
+      background: #fff;
+      border: 1px solid var(--cell-border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      text-align: center;
+      min-width: 0;
+    }
+
+    .calendar-cell.inactive {
+      opacity: 0.5;
+      background: transparent;
+      border-style: dashed;
+    }
+
+    .calendar-cell.today {
+      background: var(--primary-soft);
+      border-color: color-mix(in srgb, var(--primary) 38%, white);
+    }
+
+    .calendar-cell.today .calendar-date,
+    .calendar-cell.today .calendar-weight {
+      color: var(--primary);
+    }
+
+    .calendar-date {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .calendar-weight {
+      font-size: clamp(10px, 3vw, 14px);
+      font-weight: 600;
+      line-height: 1.15;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .arrow {
+      font-size: clamp(10px, 3vw, 12px);
+      margin-left: 6px;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .arrow.up { color: #dc2626; }
+    .arrow.down { color: #51cf66; }
+    .arrow.same { color: #adb5bd; }
+
+    .placeholder-card {
+      border: 1px dashed var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--muted);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.9));
+    }
+
+    .calendar-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 0 16px;
+    }
+
+    .calendar-action {
+      appearance: none;
+      border: 1px solid rgba(229, 231, 235, 0.95);
+      border-radius: 20px;
+      background: #fff;
+      padding: 0 16px;
+      min-height: 56px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font: inherit;
+      font-weight: 700;
+      color: var(--text);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      cursor: pointer;
+      border-color: color-mix(in srgb, var(--primary) 24%, #e5e7eb);
+    }
+
+    .calendar-action:active {
+      transform: scale(0.98);
+      background: rgba(17, 24, 39, 0.04);
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    }
+
+    .calendar-action .action-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 60%, white));
+      box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);
+      flex: 0 0 auto;
+    }
+
+    .calendar-action .action-text {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.1;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .calendar-action .action-subtext {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .calendar-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .calendar-nav button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 12px;
+      min-width: 40px;
+      min-height: 40px;
+      padding: 0 12px;
+      font: inherit;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .calendar-month-label {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .calendar-weekdays {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .calendar-weekday {
+      padding: 4px 0;
+    }
+
+    /* Month picker dropdown */
+    .month-picker-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 45;
+    }
+
+    .month-picker {
+      display: none;
+      position: absolute;
+      top: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.12);
+      padding: 8px;
+      min-width: 220px;
+    }
+
+    .month-picker.open,
+    .month-picker-overlay.open {
+      display: block;
+    }
+
+    .month-picker-inner {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .month-picker select {
+      font: inherit;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: white;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+    }
+
+    .calendar-cell {
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--cell-border);
+      border-radius: 16px;
+      background: var(--cell-bg);
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .calendar-cell.is-empty {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .calendar-date {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .calendar-weight {
+      margin-top: 6px;
+      font-size: clamp(10px, 3vw, 14px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .calendar-change {
+      margin-top: 6px;
+      font-size: clamp(10px, 3vw, 12px);
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .calendar-change.up {
+      color: #dc2626;
+    }
+
+    .calendar-change.down {
+      color: #16a34a;
+    }
+
+    .calendar-change.flat {
+      color: #9ca3af;
+    }
+
+    .tab-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(229,231,235,0.9);
+      z-index: 20;
+    }
+
+    .tab-bar-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .tab-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 8px;
+      border-radius: 14px;
+      font: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 48px;
+    }
+
+    .tab-btn span {
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .tab-btn.is-active {
+      color: var(--primary);
+      background: var(--primary-soft);
+      font-weight: 600;
+    }
+
+    .tab-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    @media (min-width: 720px) {
+      .app {
+        padding-top: 24px;
+      }
+
+      .page {
+        min-height: 520px;
+      }
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 520px;
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 20px 40px rgba(15,23,42,0.12);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .modal-title { font-weight: 700; }
+
+    .modal-actions { display: flex; gap: 8px; }
+
+    .segmented {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .segmented button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 8px 12px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .segmented button.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .modal-field { margin: 8px 0; }
+
+    .modal-field label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+
+    .modal-field input[type="date"],
+    .modal-field input[type="number"],
+    .modal-field textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font: inherit;
+      font-size: 15px;
+    }
+
+    .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+
+    /* Small screens: make modal a bottom sheet */
+    @media (max-width: 640px) {
+      .modal-overlay.open { align-items: flex-end; padding: 0; }
+      .modal { border-radius: 20px 20px 0 0; width: 100%; max-width: 100%; margin: 0; padding: 16px; }
+      .calendar-shell { height: auto; max-height: none; }
+      .calendar-grid { gap: 4px; }
+      .calendar-cell {
+        padding: 4px;
+        border-radius: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="page is-active" data-page="calendar" aria-labelledby="calendar-month-label">
+      <div class="calendar-shell">
+        <div class="calendar">
+          <div class="calendar-header" style="justify-content:center; position:relative;">
+            <div id="calendar-month-label" class="calendar-month-label" style="margin:0;text-align:center;font-size:18px;font-weight:700;color:var(--text);cursor:pointer;">
+            </div>
+
+            <!-- month picker dropdown (hidden by default) -->
+            <div id="month-picker-overlay" class="month-picker-overlay" aria-hidden="true"></div>
+            <div id="month-picker" class="month-picker" aria-hidden="true">
+              <div class="month-picker-inner">
+                <select id="month-picker-year" aria-label="选择年份"></select>
+                <select id="month-picker-month" aria-label="选择月份"></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="calendar-weekdays" aria-hidden="true">
+            <div class="calendar-weekday">日</div>
+            <div class="calendar-weekday">一</div>
+            <div class="calendar-weekday">二</div>
+            <div class="calendar-weekday">三</div>
+            <div class="calendar-weekday">四</div>
+            <div class="calendar-weekday">五</div>
+            <div class="calendar-weekday">六</div>
+          </div>
+
+          <div id="calendar-grid" class="calendar-grid" aria-label="月历"></div>
+        </div>
+
+        <div class="calendar-actions" aria-label="快捷入口">
+          <button id="calendar-action-weight" class="calendar-action" type="button">
+            <span class="action-icon">⚖️</span>
+            <span class="action-text">今日体重</span>
+          </button>
+          <button id="calendar-action-food" class="calendar-action" type="button">
+            <span class="action-icon">🍽️</span>
+            <span class="action-text">今日饮食</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="trend" aria-labelledby="trend-title">
+      <h2 id="trend-title">趋势图</h2>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="segmented" style="margin-right:8px;" id="trend-range">
+            <button type="button" data-range="week" class="active">周</button>
+            <button type="button" data-range="month">月</button>
+            <button type="button" data-range="year">年</button>
+          </div>
+          <label style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+            <input id="toggle-evening" type="checkbox"> 显示晚体重
+          </label>
+        </div>
+
+        <div>
+          <canvas id="weight-chart" width="800" height="320" aria-label="体重趋势图"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" data-page="settings" aria-labelledby="settings-title">
+      <h2 id="settings-title">设置</h2>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="placeholder-card">
+          <strong>当前主题：</strong> <span id="current-theme-name">默认</span>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <div id="theme-dots" style="display:flex;gap:8px;"></div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:12px;align-items:center;">
+            <label><input type="radio" name="theme-mode" value="random" id="theme-mode-random"> 随机（每日切换）</label>
+            <label><input type="radio" name="theme-mode" value="fixed" id="theme-mode-fixed"> 固定</label>
+          </div>
+        </div>
+
+        <div class="placeholder-card">
+          <strong>数据管理</strong>
+          <div style="margin-top:8px;display:flex;gap:8px;">
+            <button id="export-data">导出所有数据（CSV）</button>
+            <button id="clear-data" style="background:#dc2626;color:#fff;border:0;border-radius:8px;padding:8px 12px;">清空所有数据</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tab-bar" aria-label="底部导航">
+    <div class="tab-bar-inner">
+      <button class="tab-btn is-active" type="button" data-tab="calendar" aria-selected="true">
+        <span class="tab-icon">📅</span>
+        <span>日历</span>
+      </button>
+      <button class="tab-btn" type="button" data-tab="trend" aria-selected="false">
+        <span class="tab-icon">📈</span>
+        <span>趋势图</span>
+      </button>
+      <button class="tab-btn" type="button" data-tab="settings" aria-selected="false">
+        <span class="tab-icon">⚙️</span>
+        <span>设置</span>
+      </button>
+    </div>
+  </nav>
+
+  <div id="weight-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <button id="weight-cancel" type="button">取消</button>
+        <div class="modal-title">记录体重</div>
+        <div class="modal-actions">
+          <button id="weight-save" type="button">保存</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="weight-date">日期</label>
+          <input id="weight-date" type="date">
+        </div>
+
+        <div class="modal-field">
+          <label>时间段</label>
+          <div class="segmented" role="tablist" aria-label="时间段选择">
+            <button id="period-morning" type="button" data-period="morning" class="active">早上</button>
+            <button id="period-evening" type="button" data-period="evening">晚上</button>
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label for="weight-input">体重 (kg)</label>
+          <input id="weight-input" type="number" step="0.1" inputmode="decimal" placeholder="例如 72.5">
+        </div>
+
+        <div class="modal-field">
+          <label for="weight-note">备注（可选）</label>
+          <textarea id="weight-note" rows="2" placeholder="输入备注"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="weight-cancel-2" type="button">取消</button>
+        <button id="weight-save-2" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="food-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <button id="food-cancel" type="button">取消</button>
+        <div class="modal-title">今日饮食</div>
+        <div class="modal-actions">
+          <button id="food-save" type="button">保存</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="food-date">日期</label>
+          <input id="food-date" type="date">
+        </div>
+
+        <div class="modal-field">
+          <label for="food-breakfast">🍳 早餐</label>
+          <input id="food-breakfast" type="text" placeholder="例如：煎蛋+吐司">
+        </div>
+
+        <div class="modal-field">
+          <label for="food-lunch">🍱 午餐</label>
+          <input id="food-lunch" type="text" placeholder="例如：米饭+青菜+鸡胸">
+        </div>
+
+        <div class="modal-field">
+          <label for="food-dinner">🍜 晚餐</label>
+          <input id="food-dinner" type="text" placeholder="例如：面条+蔬菜">
+        </div>
+
+        <div class="modal-field">
+          <label for="food-supplements">💊 保健品</label>
+          <input id="food-supplements" type="text" placeholder="例如：鱼油">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="food-cancel-2" type="button">取消</button>
+        <button id="food-save-2" type="button">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 日期详情模态 -->
+  <div id="detail-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <button id="detail-cancel" type="button">取消</button>
+        <div class="modal-title" id="detail-modal-title">日期详情</div>
+        <div class="modal-actions">
+          <button id="detail-save" type="button">保存</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-field">
+          <label>日期</label>
+          <div id="detail-date" style="font-weight:700;"></div>
+        </div>
+
+        <div class="modal-field">
+          <label>早上体重 (kg)</label>
+          <input id="detail-morning-weight" type="number" step="0.1" inputmode="decimal" placeholder="例如 72.5">
+        </div>
+        <div class="modal-field">
+          <label>早上备注</label>
+          <input id="detail-morning-note" type="text">
+        </div>
+
+        <div class="modal-field">
+          <label>晚上体重 (kg)</label>
+          <input id="detail-evening-weight" type="number" step="0.1" inputmode="decimal" placeholder="例如 73.0">
+        </div>
+        <div class="modal-field">
+          <label>晚上备注</label>
+          <input id="detail-evening-note" type="text">
+        </div>
+
+        <hr>
+
+        <div class="modal-field">
+          <label>🍳 早餐</label>
+          <input id="detail-food-breakfast" type="text">
+        </div>
+        <div class="modal-field">
+          <label>🍱 午餐</label>
+          <input id="detail-food-lunch" type="text">
+        </div>
+        <div class="modal-field">
+          <label>🍜 晚餐</label>
+          <input id="detail-food-dinner" type="text">
+        </div>
+        <div class="modal-field">
+          <label>💊 保健品</label>
+          <input id="detail-food-supplements" type="text">
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button id="detail-delete" type="button" style="color:#fff;background:#dc2626;border-radius:10px;padding:8px 12px;border:0;">删除当天数据</button>
+        <div>
+          <button id="detail-cancel-2" type="button">取消</button>
+          <button id="detail-save-2" type="button">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const storageKey = 'weight-manager.active-tab';
+    const weightRecordsKey = 'weight-manager.weight-records';
+    const foodRecordsKey = 'weight-manager.food-records';
+    const pages = Array.from(document.querySelectorAll('.page'));
+    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+    const calendarGrid = document.getElementById('calendar-grid');
+    const calendarMonthLabel = document.getElementById('calendar-month-label');
+    // month picker elements (dropdown)
+    const monthPicker = document.getElementById('month-picker');
+    const monthPickerOverlay = document.getElementById('month-picker-overlay');
+    const monthPickerYear = document.getElementById('month-picker-year');
+    const monthPickerMonth = document.getElementById('month-picker-month');
+
+    // keep legacy button refs (may be null since buttons removed)
+    const calendarPrevButton = document.getElementById('calendar-prev');
+    const calendarNextButton = document.getElementById('calendar-next');
+    const calendarTodayButton = document.getElementById('calendar-today');
+
+    let weightRecords = {};
+    let foodRecords = {};
+    let calendarViewDate = new Date();
+
+    function toDateKey(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+
+      return `${year}-${month}-${day}`;
+    }
+
+    function getMonthLabel(date) {
+      return new Intl.DateTimeFormat('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+      }).format(date);
+    }
+
+    function getPreviousDayWeight(date) {
+      const previousDate = new Date(date);
+      previousDate.setDate(previousDate.getDate() - 1);
+
+      const previousRecord = weightRecords[toDateKey(previousDate)];
+      if (!previousRecord || previousRecord.morning === null || previousRecord.morning === undefined || previousRecord.morning === '') {
+        return null;
+      }
+
+      return Number(previousRecord.morning);
+    }
+
+    function getWeightChange(currentWeight, previousWeight) {
+      if (currentWeight === null || currentWeight === undefined || previousWeight === null || previousWeight === undefined) {
+        return { symbol: '—', className: 'flat' };
+      }
+
+      if (currentWeight > previousWeight) {
+        return { symbol: '↑', className: 'up' };
+      }
+
+      if (currentWeight < previousWeight) {
+        return { symbol: '↓', className: 'down' };
+      }
+
+      return { symbol: '—', className: 'flat' };
+    }
+
+    function renderCalendar() {
+      if (!calendarGrid || !calendarMonthLabel) {
+        return;
+      }
+
+      const year = calendarViewDate.getFullYear();
+      const month = calendarViewDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const startDay = firstDay.getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      calendarMonthLabel.textContent = getMonthLabel(calendarViewDate);
+      calendarGrid.innerHTML = '';
+
+      for (let index = 0; index < startDay; index += 1) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-cell is-empty';
+        calendarGrid.appendChild(emptyCell);
+      }
+
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const currentDate = new Date(year, month, day);
+        const dateKey = toDateKey(currentDate);
+        const record = weightRecords[dateKey];
+        const morningWeight = record && record.morning !== null && record.morning !== undefined && record.morning !== ''
+          ? Number(record.morning)
+          : null;
+        const change = morningWeight === null ? { symbol: '—', className: 'flat' } : getWeightChange(morningWeight, getPreviousDayWeight(currentDate));
+
+        const cell = document.createElement('div');
+        cell.className = 'calendar-cell';
+        if (dateKey === toDateKey(new Date())) {
+          cell.classList.add('today');
+        }
+        cell.dataset.date = dateKey;
+
+        cell.addEventListener('click', () => {
+          openDetailModal(dateKey);
+        });
+
+        const dateEl = document.createElement('div');
+        dateEl.className = 'calendar-date';
+        dateEl.textContent = day;
+
+        const weightEl = document.createElement('div');
+        weightEl.className = 'calendar-weight';
+        weightEl.textContent = morningWeight === null ? '' : morningWeight.toFixed(1);
+
+        const changeEl = document.createElement('div');
+        changeEl.className = `calendar-change ${change.className}`;
+        changeEl.textContent = morningWeight === null ? '' : change.symbol;
+
+        cell.appendChild(dateEl);
+        cell.appendChild(weightEl);
+        cell.appendChild(changeEl);
+        calendarGrid.appendChild(cell);
+      }
+    }
+
+    /* --- month picker logic --- */
+    function populateMonthPicker() {
+      if (!monthPickerYear || !monthPickerMonth) return;
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const startYear = currentYear - 5; // past five years to current
+      monthPickerYear.innerHTML = '';
+      for (let y = startYear; y <= currentYear; y++) {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = `${y}年`;
+        monthPickerYear.appendChild(opt);
+      }
+
+      monthPickerMonth.innerHTML = '';
+      for (let m = 1; m <= 12; m++) {
+        const opt = document.createElement('option');
+        opt.value = String(m);
+        opt.textContent = `${m}月`;
+        monthPickerMonth.appendChild(opt);
+      }
+
+      // set current selection from view date
+      monthPickerYear.value = String(calendarViewDate.getFullYear());
+      monthPickerMonth.value = String(calendarViewDate.getMonth() + 1);
+    }
+
+    function openMonthPicker() {
+      populateMonthPicker();
+      if (monthPicker) monthPicker.classList.add('open');
+      if (monthPickerOverlay) monthPickerOverlay.classList.add('open');
+      if (monthPicker) monthPicker.setAttribute('aria-hidden', 'false');
+      if (monthPickerOverlay) monthPickerOverlay.setAttribute('aria-hidden', 'false');
+      // prevent background scroll on mobile
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMonthPicker() {
+      if (monthPicker) monthPicker.classList.remove('open');
+      if (monthPickerOverlay) monthPickerOverlay.classList.remove('open');
+      if (monthPicker) monthPicker.setAttribute('aria-hidden', 'true');
+      if (monthPickerOverlay) monthPickerOverlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function applyPickedMonth() {
+      if (!monthPickerYear || !monthPickerMonth) return;
+      const y = parseInt(monthPickerYear.value, 10);
+      const m = parseInt(monthPickerMonth.value, 10) - 1;
+      calendarViewDate = new Date(y, m, 1);
+      renderCalendar();
+    }
+
+    if (calendarMonthLabel) {
+      calendarMonthLabel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMonthPicker();
+      });
+    }
+
+    if (monthPickerOverlay) {
+      monthPickerOverlay.addEventListener('click', () => closeMonthPicker());
+    }
+
+    if (monthPickerYear) monthPickerYear.addEventListener('change', () => applyPickedMonth());
+    if (monthPickerMonth) monthPickerMonth.addEventListener('change', () => applyPickedMonth());
+
+    document.addEventListener('click', (e) => {
+      if (!monthPicker) return;
+      if (!monthPicker.classList.contains('open')) return;
+      // if click outside picker and not on month label, close
+      if (!monthPicker.contains(e.target) && e.target !== calendarMonthLabel) {
+        closeMonthPicker();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMonthPicker();
+    });
+
+    /* --- 日期详情弹窗脚本 --- */
+    const detailOverlay = document.getElementById('detail-modal-overlay');
+    const detailDateEl = document.getElementById('detail-date');
+    const detailMorningWeight = document.getElementById('detail-morning-weight');
+    const detailMorningNote = document.getElementById('detail-morning-note');
+    const detailEveningWeight = document.getElementById('detail-evening-weight');
+    const detailEveningNote = document.getElementById('detail-evening-note');
+    const detailFoodBreakfast = document.getElementById('detail-food-breakfast');
+    const detailFoodLunch = document.getElementById('detail-food-lunch');
+    const detailFoodDinner = document.getElementById('detail-food-dinner');
+    const detailFoodSupplements = document.getElementById('detail-food-supplements');
+    const detailSaveBtns = [document.getElementById('detail-save'), document.getElementById('detail-save-2')];
+    const detailCancelBtns = [document.getElementById('detail-cancel'), document.getElementById('detail-cancel-2')];
+    const detailDeleteBtn = document.getElementById('detail-delete');
+
+    let currentDetailDate = null;
+
+    function openDetailModal(dateKey) {
+      currentDetailDate = dateKey;
+      detailDateEl.textContent = dateKey;
+      prefillDetailModal(dateKey);
+      detailOverlay.classList.add('open');
+      detailOverlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeDetailModal() {
+      detailOverlay.classList.remove('open');
+      detailOverlay.setAttribute('aria-hidden', 'true');
+      currentDetailDate = null;
+    }
+
+    function prefillDetailModal(dateKey) {
+      const w = getWeightByDate(dateKey) || {};
+      detailMorningWeight.value = w.morning === null || w.morning === undefined ? '' : String(w.morning);
+      detailMorningNote.value = w.morningNote || '';
+      detailEveningWeight.value = w.evening === null || w.evening === undefined ? '' : String(w.evening);
+      detailEveningNote.value = w.eveningNote || '';
+
+      const f = getFoodByDate(dateKey) || {};
+      detailFoodBreakfast.value = f.breakfast || '';
+      detailFoodLunch.value = f.lunch || '';
+      detailFoodDinner.value = f.dinner || '';
+      detailFoodSupplements.value = f.supplements || '';
+    }
+
+    detailCancelBtns.forEach((btn) => {
+      if (!btn) return;
+      btn.addEventListener('click', () => closeDetailModal());
+    });
+
+    detailSaveBtns.forEach((btn) => {
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        if (!currentDetailDate) return;
+        const mw = detailMorningWeight.value === '' ? '' : Number(detailMorningWeight.value);
+        const mn = detailMorningNote.value || '';
+        const ew = detailEveningWeight.value === '' ? '' : Number(detailEveningWeight.value);
+        const en = detailEveningNote.value || '';
+
+        // save weights
+        saveWeight(currentDetailDate, 'morning', mw, mn);
+        saveWeight(currentDetailDate, 'evening', ew, en);
+
+        // save food
+        const bf = detailFoodBreakfast.value || '';
+        const lu = detailFoodLunch.value || '';
+        const di = detailFoodDinner.value || '';
+        const su = detailFoodSupplements.value || '';
+        saveFood(currentDetailDate, bf, lu, di, su);
+
+        closeDetailModal();
+      });
+    });
+
+    if (detailDeleteBtn) {
+      detailDeleteBtn.addEventListener('click', () => {
+        if (!currentDetailDate) return;
+        if (!confirm('确认删除当天的所有体重与饮食记录？')) return;
+        delete weightRecords[currentDetailDate];
+        delete foodRecords[currentDetailDate];
+        saveData();
+        closeDetailModal();
+      });
+    }
+
+    detailOverlay.addEventListener('click', (e) => {
+      if (e.target === detailOverlay) closeDetailModal();
+    });
+
+    function goToPreviousMonth() {
+      calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() - 1, 1);
+      renderCalendar();
+    }
+
+    function goToNextMonth() {
+      calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1);
+      renderCalendar();
+    }
+
+    function goToCurrentMonth() {
+      const today = new Date();
+      calendarViewDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      renderCalendar();
+    }
+
+    function loadData() {
+      try {
+        const storedWeightRecords = localStorage.getItem(weightRecordsKey);
+        const storedFoodRecords = localStorage.getItem(foodRecordsKey);
+
+        weightRecords = storedWeightRecords ? JSON.parse(storedWeightRecords) : {};
+        foodRecords = storedFoodRecords ? JSON.parse(storedFoodRecords) : {};
+      } catch (error) {
+        weightRecords = {};
+        foodRecords = {};
+      }
+
+      return {
+        weightRecords,
+        foodRecords,
+      };
+    }
+
+    function saveData() {
+      localStorage.setItem(weightRecordsKey, JSON.stringify(weightRecords));
+      localStorage.setItem(foodRecordsKey, JSON.stringify(foodRecords));
+      renderCalendar();
+      if (typeof updateChart === 'function') updateChart();
+    }
+
+    function getWeightByDate(date) {
+      return weightRecords[date] || null;
+    }
+
+    function getFoodByDate(date) {
+      return foodRecords[date] || null;
+    }
+
+    function saveWeight(date, period, weight, note = '') {
+      if (!date) {
+        return null;
+      }
+
+      const targetPeriod = period === 'evening' ? 'evening' : 'morning';
+      const existingRecord = weightRecords[date] || {
+        morning: null,
+        evening: null,
+        morningNote: '',
+        eveningNote: '',
+      };
+
+      existingRecord[targetPeriod] = weight === '' || weight === null || weight === undefined ? null : Number(weight);
+      existingRecord[`${targetPeriod}Note`] = note || '';
+
+      weightRecords[date] = existingRecord;
+      saveData();
+
+      return existingRecord;
+    }
+
+    function saveFood(date, breakfast = '', lunch = '', dinner = '', supplements = '') {
+      if (!date) {
+        return null;
+      }
+
+      const record = {
+        breakfast: breakfast || '',
+        lunch: lunch || '',
+        dinner: dinner || '',
+        supplements: supplements || '',
+      };
+
+      foodRecords[date] = record;
+      saveData();
+
+      return record;
+    }
+
+    function setActiveTab(tabName) {
+      pages.forEach((page) => {
+        page.classList.toggle('is-active', page.dataset.page === tabName);
+      });
+
+      tabButtons.forEach((button) => {
+        const isActive = button.dataset.tab === tabName;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-selected', String(isActive));
+      });
+
+      localStorage.setItem(storageKey, tabName);
+    }
+
+    loadData();
+
+    const today = new Date();
+    calendarViewDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    renderCalendar();
+
+    const initialTab = localStorage.getItem(storageKey) || 'calendar';
+    setActiveTab(initialTab);
+
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setActiveTab(button.dataset.tab);
+      });
+    });
+
+    if (calendarPrevButton) {
+      calendarPrevButton.addEventListener('click', goToPreviousMonth);
+    }
+
+    if (calendarNextButton) {
+      calendarNextButton.addEventListener('click', goToNextMonth);
+    }
+
+    if (calendarTodayButton) {
+      calendarTodayButton.addEventListener('click', goToCurrentMonth);
+    }
+
+    /* --- 趋势图逻辑（Chart.js） --- */
+    const chartCtx = document.getElementById('weight-chart') && document.getElementById('weight-chart').getContext ? document.getElementById('weight-chart').getContext('2d') : null;
+    let weightChart = null;
+    const rangeButtons = Array.from(document.querySelectorAll('#trend-range button'));
+    const toggleEvening = document.getElementById('toggle-evening');
+
+    function parseDateKey(key) {
+      // key is YYYY-MM-DD
+      return new Date(key + 'T00:00:00');
+    }
+
+    function getLastNDates(n) {
+      const dates = [];
+      const today = new Date();
+      for (let i = n - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        dates.push(d);
+      }
+      return dates;
+    }
+
+    function getMonthlyAverages(months = 12) {
+      const res = [];
+      const now = new Date();
+      for (let i = months - 1; i >= 0; i--) {
+        const m = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const year = m.getFullYear();
+        const month = m.getMonth();
+        const days = new Date(year, month + 1, 0).getDate();
+        let sumMorning = 0, countMorning = 0;
+        let sumEvening = 0, countEvening = 0;
+        for (let d = 1; d <= days; d++) {
+          const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = weightRecords[key];
+          if (rec) {
+            if (rec.morning !== null && rec.morning !== undefined && rec.morning !== '') { sumMorning += Number(rec.morning); countMorning++; }
+            if (rec.evening !== null && rec.evening !== undefined && rec.evening !== '') { sumEvening += Number(rec.evening); countEvening++; }
+          }
+        }
+        res.push({
+          month: m,
+          morning: countMorning ? +(sumMorning / countMorning).toFixed(2) : null,
+          evening: countEvening ? +(sumEvening / countEvening).toFixed(2) : null,
+        });
+      }
+      return res;
+    }
+
+    function buildDatasets(range) {
+      // range: 'week'|'month'|'year'
+      if (range === 'year') {
+        const months = getMonthlyAverages(12);
+        const labels = months.map(m => new Intl.DateTimeFormat('zh-CN', {month: 'short', year: 'numeric'}).format(m.month));
+        const morningData = months.map(m => m.morning);
+        const eveningData = months.map(m => m.evening);
+        return { labels, morningData, eveningData };
+      }
+
+      const n = range === 'week' ? 7 : 30;
+      const dates = getLastNDates(n);
+      const labels = dates.map(d => new Intl.DateTimeFormat('zh-CN', {month: 'numeric', day: 'numeric'}).format(d));
+      const morningData = dates.map(d => {
+        const key = toDateKey(d);
+        const rec = weightRecords[key];
+        return (rec && rec.morning !== null && rec.morning !== undefined && rec.morning !== '') ? Number(rec.morning) : null;
+      });
+      const eveningData = dates.map(d => {
+        const key = toDateKey(d);
+        const rec = weightRecords[key];
+        return (rec && rec.evening !== null && rec.evening !== undefined && rec.evening !== '') ? Number(rec.evening) : null;
+      });
+
+      return { labels, morningData, eveningData };
+    }
+
+    function createChart() {
+      if (!chartCtx) return;
+      const initial = buildDatasets('week');
+      weightChart = new Chart(chartCtx, {
+        type: 'line',
+        data: {
+          labels: initial.labels,
+          datasets: [
+            {
+              label: '早体重',
+              data: initial.morningData,
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37,99,235,0.08)',
+              tension: 0.2,
+              spanGaps: true,
+            },
+            {
+              label: '晚体重',
+              data: initial.eveningData,
+              borderColor: '#16a34a',
+              backgroundColor: 'rgba(16,163,76,0.06)',
+              tension: 0.2,
+              spanGaps: true,
+              hidden: !toggleEvening || !toggleEvening.checked,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { display: true },
+            y: { display: true, title: { display: true, text: 'kg' } }
+          },
+          plugins: { legend: { position: 'top' } }
+        }
+      });
+    }
+
+    /* --- 主题系统与设置页面逻辑 --- */
+    const themeModeKey = 'weight-manager.theme-mode';
+    const themeFixedKey = 'weight-manager.theme-fixed';
+    const themeAssignedKey = 'weight-manager.theme-assigned-date';
+    const themeAssignedNameKey = 'weight-manager.theme-assigned-name';
+
+    const themePresets = {
+      blue: { name: '蓝', primary: '#2563eb', primarySoft: 'rgba(37,99,235,0.1)', cellBg: '#ffffff', cellBorder: '#e5e7eb', chartMorning: '#2563eb', chartEvening: '#06b6d4' },
+      green: { name: '绿', primary: '#16a34a', primarySoft: 'rgba(16,163,74,0.08)', cellBg: '#f6fffa', cellBorder: '#bbf7d0', chartMorning: '#16a34a', chartEvening: '#10b981' },
+      pink: { name: '粉', primary: '#ec4899', primarySoft: 'rgba(236,72,153,0.08)', cellBg: '#fff5f7', cellBorder: '#fbcfe8', chartMorning: '#ec4899', chartEvening: '#f472b6' },
+      orange: { name: '橙', primary: '#f97316', primarySoft: 'rgba(249,115,22,0.08)', cellBg: '#fff7ed', cellBorder: '#ffedd5', chartMorning: '#f97316', chartEvening: '#fb923c' },
+      purple: { name: '紫', primary: '#7c3aed', primarySoft: 'rgba(124,58,237,0.08)', cellBg: '#f8f7ff', cellBorder: '#e9d5ff', chartMorning: '#7c3aed', chartEvening: '#8b5cf6' },
+    };
+
+    function applyThemeByName(name) {
+      const t = themePresets[name] || themePresets.blue;
+      document.documentElement.style.setProperty('--primary', t.primary);
+      document.documentElement.style.setProperty('--primary-soft', t.primarySoft);
+      document.documentElement.style.setProperty('--cell-bg', t.cellBg);
+      document.documentElement.style.setProperty('--cell-border', t.cellBorder);
+      document.documentElement.style.setProperty('--chart-morning', t.chartMorning);
+      document.documentElement.style.setProperty('--chart-evening', t.chartEvening);
+      // store current name for UI
+      document.getElementById('current-theme-name') && (document.getElementById('current-theme-name').textContent = t.name + ' (' + name + ')');
+      // update chart colors
+      if (weightChart) {
+        weightChart.data.datasets[0].borderColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-morning').trim() || t.chartMorning;
+        weightChart.data.datasets[1].borderColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-evening').trim() || t.chartEvening;
+        weightChart.update();
+      }
+    }
+
+    function initTheme() {
+      const mode = localStorage.getItem(themeModeKey) || 'random';
+      const fixed = localStorage.getItem(themeFixedKey) || 'blue';
+      // populate settings UI
+      const themeDots = document.getElementById('theme-dots');
+      if (themeDots) {
+        themeDots.innerHTML = '';
+        Object.keys(themePresets).forEach((k) => {
+          const t = themePresets[k];
+          const btn = document.createElement('button');
+          btn.title = t.name;
+          btn.style.width = '28px';
+          btn.style.height = '28px';
+          btn.style.borderRadius = '50%';
+          btn.style.border = '2px solid transparent';
+          btn.style.background = t.primary;
+          btn.dataset.theme = k;
+          btn.addEventListener('click', () => {
+            // if fixed mode selected, set fixed theme immediately
+            const selectedMode = localStorage.getItem(themeModeKey) || 'random';
+            if (selectedMode === 'fixed') {
+              localStorage.setItem(themeFixedKey, k);
+              applyThemeByName(k);
+            } else {
+              // preview only
+              applyThemeByName(k);
+            }
+          });
+          themeDots.appendChild(btn);
+        });
+      }
+
+      // set radio
+      const randomRadio = document.getElementById('theme-mode-random');
+      const fixedRadio = document.getElementById('theme-mode-fixed');
+      if (randomRadio && fixedRadio) {
+        if (mode === 'fixed') fixedRadio.checked = true; else randomRadio.checked = true;
+        randomRadio.addEventListener('change', () => { if (randomRadio.checked) { localStorage.setItem(themeModeKey, 'random'); selectDailyTheme(); } });
+        fixedRadio.addEventListener('change', () => { if (fixedRadio.checked) { localStorage.setItem(themeModeKey, 'fixed'); const f = localStorage.getItem(themeFixedKey) || 'blue'; applyThemeByName(f); } });
+      }
+
+      // apply either fixed or today's random
+      if (mode === 'fixed') {
+        applyThemeByName(fixed);
+      } else {
+        selectDailyTheme();
+      }
+    }
+
+    function selectDailyTheme() {
+      const today = new Date().toISOString().slice(0,10);
+      const lastDate = localStorage.getItem(themeAssignedKey);
+      const lastName = localStorage.getItem(themeAssignedNameKey);
+      if (lastDate === today && lastName) {
+        applyThemeByName(lastName);
+        return lastName;
+      }
+      const keys = Object.keys(themePresets);
+      const pick = keys[Math.floor(Math.random() * keys.length)];
+      localStorage.setItem(themeAssignedKey, today);
+      localStorage.setItem(themeAssignedNameKey, pick);
+      applyThemeByName(pick);
+      return pick;
+    }
+
+    // data export
+    function exportAllData() {
+      const dates = new Set([...Object.keys(weightRecords), ...Object.keys(foodRecords)]);
+      const rows = [];
+      rows.push(['date','morning','morningNote','evening','eveningNote','breakfast','lunch','dinner','supplements']);
+      Array.from(dates).sort().forEach((d) => {
+        const w = weightRecords[d] || {};
+        const f = foodRecords[d] || {};
+        rows.push([
+          d,
+          (w.morning === null || w.morning === undefined) ? '' : w.morning,
+          w.morningNote || '',
+          (w.evening === null || w.evening === undefined) ? '' : w.evening,
+          w.eveningNote || '',
+          f.breakfast || '',
+          f.lunch || '',
+          f.dinner || '',
+          f.supplements || '',
+        ]);
+      });
+      const csv = rows.map(r => r.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `weight-data-${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function clearAllData() {
+      if (!confirm('确认清空所有体重与饮食记录？此操作不可撤销。')) return;
+      localStorage.removeItem(weightRecordsKey);
+      localStorage.removeItem(foodRecordsKey);
+      weightRecords = {};
+      foodRecords = {};
+      renderCalendar();
+      updateChart();
+    }
+
+    // wire settings buttons
+    const exportBtn = document.getElementById('export-data');
+    const clearBtn = document.getElementById('clear-data');
+    if (exportBtn) exportBtn.addEventListener('click', exportAllData);
+    if (clearBtn) clearBtn.addEventListener('click', clearAllData);
+
+    // initialize theme UI
+    initTheme();
+
+    function updateChart() {
+      if (!weightChart) { createChart(); return; }
+      const active = rangeButtons.find(b => b.classList.contains('active')) || rangeButtons[0];
+      const range = active ? active.dataset.range : 'week';
+      const d = buildDatasets(range);
+      weightChart.data.labels = d.labels;
+      weightChart.data.datasets[0].data = d.morningData;
+      weightChart.data.datasets[1].data = d.eveningData;
+      weightChart.data.datasets[1].hidden = !(toggleEvening && toggleEvening.checked);
+      weightChart.update();
+    }
+
+    // wire range buttons
+    rangeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        rangeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateChart();
+      });
+    });
+
+    if (toggleEvening) {
+      toggleEvening.addEventListener('change', () => updateChart());
+    }
+
+    // initialize chart after DOM load
+    createChart();
+
+    window.WeightManager = {
+      get weightRecords() {
+        return weightRecords;
+      },
+      get foodRecords() {
+        return foodRecords;
+      },
+      saveData,
+      loadData,
+      getWeightByDate,
+      getFoodByDate,
+      saveWeight,
+      saveFood,
+    };
+
+    /* --- 今日体重弹窗逻辑 --- */
+    const modalOverlay = document.getElementById('weight-modal-overlay');
+    const modalDate = document.getElementById('weight-date');
+    const periodMorningBtn = document.getElementById('period-morning');
+    const periodEveningBtn = document.getElementById('period-evening');
+    const weightInput = document.getElementById('weight-input');
+    const weightNote = document.getElementById('weight-note');
+    const weightSaveBtns = [document.getElementById('weight-save'), document.getElementById('weight-save-2')];
+    const weightCancelBtns = [document.getElementById('weight-cancel'), document.getElementById('weight-cancel-2')];
+    const calendarActionWeight = document.getElementById('calendar-action-weight');
+    const calendarActionFood = document.getElementById('calendar-action-food');
+
+    function openWeightModal(preselectDate) {
+      const now = new Date();
+      const currentHour = now.getHours();
+
+      // default date to today or provided date
+      const todayKey = toDateKey(now);
+      const dateToUse = preselectDate || todayKey;
+      modalDate.value = dateToUse;
+
+      // choose default period based on current time
+      const defaultPeriod = (currentHour <= 13) ? 'morning' : 'evening';
+      setPeriod(defaultPeriod);
+
+      // if there is a record for this date and period, prefill
+      prefillModalFromRecord(dateToUse, defaultPeriod);
+
+      modalOverlay.classList.add('open');
+      modalOverlay.setAttribute('aria-hidden', 'false');
+      weightInput.focus();
+    }
+
+    function closeWeightModal() {
+      modalOverlay.classList.remove('open');
+      modalOverlay.setAttribute('aria-hidden', 'true');
+      // clear fields
+      weightInput.value = '';
+      weightNote.value = '';
+    }
+
+    function setPeriod(p) {
+      if (p === 'evening') {
+        periodEveningBtn.classList.add('active');
+        periodMorningBtn.classList.remove('active');
+      } else {
+        periodMorningBtn.classList.add('active');
+        periodEveningBtn.classList.remove('active');
+      }
+    }
+
+    function getSelectedPeriod() {
+      return periodEveningBtn.classList.contains('active') ? 'evening' : 'morning';
+    }
+
+    function prefillModalFromRecord(dateKey, period) {
+      const rec = getWeightByDate(dateKey);
+      if (rec) {
+        const val = rec[period];
+        const note = rec[`${period}Note`] || '';
+        weightInput.value = (val === null || val === undefined) ? '' : String(val);
+        weightNote.value = note;
+      } else {
+        weightInput.value = '';
+        weightNote.value = '';
+      }
+    }
+
+    // open modal
+    if (calendarActionWeight) {
+      calendarActionWeight.addEventListener('click', () => openWeightModal());
+    }
+
+    // period toggle
+    periodMorningBtn.addEventListener('click', () => {
+      setPeriod('morning');
+      prefillModalFromRecord(modalDate.value, 'morning');
+    });
+    periodEveningBtn.addEventListener('click', () => {
+      setPeriod('evening');
+      prefillModalFromRecord(modalDate.value, 'evening');
+    });
+
+    // date change
+    modalDate.addEventListener('change', () => {
+      prefillModalFromRecord(modalDate.value, getSelectedPeriod());
+    });
+
+    // save/cancel handlers
+    weightSaveBtns.forEach((btn) => {
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const dateKey = modalDate.value;
+        const period = getSelectedPeriod();
+        const val = weightInput.value;
+        const note = weightNote.value || '';
+
+        const numeric = val === '' ? null : Number(val);
+        if (numeric === null || Number.isNaN(numeric)) {
+          alert('请填写体重（数字）');
+          return;
+        }
+
+        saveWeight(dateKey, period, numeric, note);
+        closeWeightModal();
+      });
+    });
+
+    weightCancelBtns.forEach((btn) => {
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        closeWeightModal();
+      });
+    });
+
+    // overlay click or Esc to close
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeWeightModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeWeightModal();
+    });
+
+    /* --- 今日饮食弹窗逻辑 --- */
+    const foodModalOverlay = document.getElementById('food-modal-overlay');
+    const foodDateInput = document.getElementById('food-date');
+    const foodBreakfast = document.getElementById('food-breakfast');
+    const foodLunch = document.getElementById('food-lunch');
+    const foodDinner = document.getElementById('food-dinner');
+    const foodSupplements = document.getElementById('food-supplements');
+    const foodSaveBtns = [document.getElementById('food-save'), document.getElementById('food-save-2')];
+    const foodCancelBtns = [document.getElementById('food-cancel'), document.getElementById('food-cancel-2')];
+
+    function openFoodModal(preselectDate) {
+      const now = new Date();
+      const todayKey = toDateKey(now);
+      const dateToUse = preselectDate || todayKey;
+      foodDateInput.value = dateToUse;
+      prefillFoodModal(dateToUse);
+      foodModalOverlay.classList.add('open');
+      foodModalOverlay.setAttribute('aria-hidden', 'false');
+      foodBreakfast.focus();
+    }
+
+    function closeFoodModal() {
+      foodModalOverlay.classList.remove('open');
+      foodModalOverlay.setAttribute('aria-hidden', 'true');
+      foodBreakfast.value = '';
+      foodLunch.value = '';
+      foodDinner.value = '';
+      foodSupplements.value = '';
+    }
+
+    function prefillFoodModal(dateKey) {
+      const rec = getFoodByDate(dateKey);
+      if (rec) {
+        foodBreakfast.value = rec.breakfast || '';
+        foodLunch.value = rec.lunch || '';
+        foodDinner.value = rec.dinner || '';
+        foodSupplements.value = rec.supplements || '';
+      } else {
+        foodBreakfast.value = '';
+        foodLunch.value = '';
+        foodDinner.value = '';
+        foodSupplements.value = '';
+      }
+    }
+
+    if (calendarActionFood) {
+      calendarActionFood.addEventListener('click', () => openFoodModal());
+    }
+
+    foodDateInput.addEventListener('change', () => {
+      prefillFoodModal(foodDateInput.value);
+    });
+
+    foodSaveBtns.forEach((btn) => {
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const dateKey = foodDateInput.value;
+        const breakfast = foodBreakfast.value || '';
+        const lunch = foodLunch.value || '';
+        const dinner = foodDinner.value || '';
+        const supplements = foodSupplements.value || '';
+
+        saveFood(dateKey, breakfast, lunch, dinner, supplements);
+        closeFoodModal();
+      });
+    });
+
+    foodCancelBtns.forEach((btn) => {
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        closeFoodModal();
+      });
+    });
+
+    foodModalOverlay.addEventListener('click', (e) => {
+      if (e.target === foodModalOverlay) closeFoodModal();
+    });
+
+  </script>
+</body>
+</html>
