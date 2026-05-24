@@ -12,15 +12,16 @@
       --text: #1f2937;
       --muted: #6b7280;
       --border: #e5e7eb;
-      --primary: #2563eb;
-      --primary-soft: rgba(37, 99, 235, 0.1);
+      --primary: #4381C1;
+      --primary-soft: rgba(67, 129, 193, 0.14);
       --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
       --tab-height: 70px;
       --radius: 18px;
-      --cell-bg: #ffffff;
-      --cell-border: #e5e7eb;
-      --chart-morning: #2563eb;
-      --chart-evening: #16a34a;
+      --cell-bg: #f7fbff;
+      --cell-border: #cfe1f2;
+      --chart-morning: #4381C1;
+      --chart-evening: #6aa7e8;
+      --primary-rgb: 67,129,193;
     }
 
     * {
@@ -32,7 +33,7 @@
       min-height: 100%;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
       background:
-        radial-gradient(circle at top, rgba(37, 99, 235, 0.08), transparent 35%),
+        radial-gradient(circle at top, rgba(var(--primary-rgb), 0.16), transparent 35%),
         var(--bg);
       color: var(--text);
     }
@@ -106,15 +107,15 @@
         --text: #e6eef8;
         --muted: #9aa4b2;
         --border: #16181a;
-        --primary: #60a5fa;
-        --primary-soft: rgba(96,165,250,0.12);
+        --primary: #4381C1;
+        --primary-soft: rgba(67,129,193,0.16);
         --shadow: 0 12px 30px rgba(0,0,0,0.6);
         --modal-bg: rgba(18,18,20,0.85);
         --modal-text: #ececec;
         --modal-accent: var(--primary);
         --modal-shadow: 0 12px 30px rgba(0,0,0,0.6);
         --modal-border: rgba(255,255,255,0.04);
-        --primary-rgb: 96,165,250;
+        --primary-rgb: 67,129,193;
         --border-rgb: 20,20,22;
       }
       flex-direction: column;
@@ -1837,16 +1838,17 @@
     const themeAssignedNameKey = 'weight-manager.theme-assigned-name';
 
     const themePresets = {
-      blue: { name: '蓝', primary: '#2563eb', primarySoft: 'rgba(37,99,235,0.1)', cellBg: '#ffffff', cellBorder: '#e5e7eb', chartMorning: '#2563eb', chartEvening: '#06b6d4' },
-      green: { name: '绿', primary: '#16a34a', primarySoft: 'rgba(16,163,74,0.08)', cellBg: '#f6fffa', cellBorder: '#bbf7d0', chartMorning: '#16a34a', chartEvening: '#10b981' },
-      pink: { name: '粉', primary: '#ec4899', primarySoft: 'rgba(236,72,153,0.08)', cellBg: '#fff5f7', cellBorder: '#fbcfe8', chartMorning: '#ec4899', chartEvening: '#f472b6' },
-      orange: { name: '橙', primary: '#f97316', primarySoft: 'rgba(249,115,22,0.08)', cellBg: '#fff7ed', cellBorder: '#ffedd5', chartMorning: '#f97316', chartEvening: '#fb923c' },
-      purple: { name: '紫', primary: '#7c3aed', primarySoft: 'rgba(124,58,237,0.08)', cellBg: '#f8f7ff', cellBorder: '#e9d5ff', chartMorning: '#7c3aed', chartEvening: '#8b5cf6' },
+      blue: { name: '蓝', primary: '#4381C1', primaryRgb: '67,129,193', primarySoft: 'rgba(67,129,193,0.14)', cellBg: '#f7fbff', cellBorder: '#cfe1f2', chartMorning: '#4381C1', chartEvening: '#6aa7e8' },
+      green: { name: '绿', primary: '#84A98C', primaryRgb: '132,169,140', primarySoft: 'rgba(132,169,140,0.16)', cellBg: '#f7fbf7', cellBorder: '#d8e6da', chartMorning: '#84A98C', chartEvening: '#6ca27b' },
+      pink: { name: '紫', primary: '#662C91', primaryRgb: '102,44,145', primarySoft: 'rgba(102,44,145,0.16)', cellBg: '#f7f1fb', cellBorder: '#d8c6ea', chartMorning: '#662C91', chartEvening: '#8e63bd' },
+      orange: { name: '橙', primary: '#DF9A57', primaryRgb: '223,154,87', primarySoft: 'rgba(223,154,87,0.16)', cellBg: '#fff8f1', cellBorder: '#f3d4b4', chartMorning: '#DF9A57', chartEvening: '#eeb775' },
+      purple: { name: '红', primary: '#EF476F', primaryRgb: '239,71,111', primarySoft: 'rgba(239,71,111,0.16)', cellBg: '#fff5f7', cellBorder: '#f5c1ce', chartMorning: '#EF476F', chartEvening: '#ff6b8f' },
     };
 
     function applyThemeByName(name) {
       const t = themePresets[name] || themePresets.blue;
       document.documentElement.style.setProperty('--primary', t.primary);
+      document.documentElement.style.setProperty('--primary-rgb', t.primaryRgb || t.primary.replace('#', '').match(/.{2}/g).map((x) => parseInt(x, 16)).join(','));
       document.documentElement.style.setProperty('--primary-soft', t.primarySoft);
       document.documentElement.style.setProperty('--cell-bg', t.cellBg);
       document.documentElement.style.setProperty('--cell-border', t.cellBorder);
