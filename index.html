@@ -518,14 +518,20 @@
     }
 
     .modal {
-      width: 100%;
+      width: min(520px, calc(100vw - 32px));
       max-width: 520px;
       background: var(--panel);
-      border-radius: 14px;
-      padding: 12px;
+      border-radius: 18px;
+      padding: 16px;
       box-shadow: 0 20px 40px rgba(15,23,42,0.12);
-      max-height: 90vh;
+      max-height: min(90vh, calc(100vh - 32px));
       overflow-y: auto;
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .modal-header {
@@ -579,10 +585,21 @@
 
     .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
 
-    /* Small screens: make modal a bottom sheet */
     @media (max-width: 640px) {
-      .modal-overlay.open { align-items: flex-end; padding: 0; }
-      .modal { border-radius: 20px 20px 0 0; width: 100%; max-width: 100%; margin: 0; padding: 16px; }
+      .modal-overlay { padding: 16px; }
+      .modal {
+        width: min(100%, calc(100vw - 24px));
+        max-width: 100%;
+        border-radius: 16px;
+        padding: 16px;
+      }
+      .modal-header {
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .modal-footer {
+        margin-top: 12px;
+      }
       .calendar-shell { height: auto; max-height: none; }
       .calendar-grid { gap: 4px; }
       .calendar-cell {
@@ -710,23 +727,23 @@
         <button id="weight-cancel" type="button">取消</button>
         <div class="modal-title">记录体重</div>
         <div class="modal-actions">
-          aspect-ratio: 1 / 1.2;
+          <button id="weight-save" type="button">保存</button>
+        </div>
       </div>
 
-          padding: 8px 6px;
+      <div class="modal-body">
         <div class="modal-field">
           <label for="weight-date">日期</label>
-          justify-content: center;
+          <input id="weight-date" type="date">
         </div>
 
         <div class="modal-field">
           <label>时间段</label>
-          border: 0;
           <div class="segmented" role="tablist" aria-label="时间段选择">
             <button id="period-morning" type="button" data-period="morning" class="active">早上</button>
             <button id="period-evening" type="button" data-period="evening">晚上</button>
           </div>
-          border: 0;
+        </div>
 
         <div class="modal-field">
           <label for="weight-input">体重 (kg)</label>
@@ -735,40 +752,42 @@
 
         <div class="modal-field">
           <label for="weight-note">备注（可选）</label>
-          overflow: visible;
-          text-overflow: clip;
+          <textarea id="weight-note" rows="2" placeholder="输入备注"></textarea>
+        </div>
+      </div>
 
       <div class="modal-footer">
         <button id="weight-cancel-2" type="button">取消</button>
         <button id="weight-save-2" type="button">保存</button>
-        .calendar-diff {
-          font-size: clamp(10px, 3vw, 12px);
+      </div>
+    </div>
+  </div>
 
+  <div id="food-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <div class="modal-header">
-          overflow: visible;
+        <button id="food-cancel" type="button">取消</button>
         <div class="modal-title">今日饮食</div>
         <div class="modal-actions">
           <button id="food-save" type="button">保存</button>
         </div>
       </div>
-        .calendar-diff.morning {
-          margin-top: 1px;
+
+      <div class="modal-body">
+        <div class="modal-field">
+          <label for="food-date">日期</label>
+          <input id="food-date" type="date">
         </div>
 
-        .calendar-diff.evening {
-          margin-top: 0;
-        }
-
-        .calendar-diff.up {
+        <div class="modal-field">
           <label for="food-breakfast">🍳 早餐</label>
           <input id="food-breakfast" type="text" placeholder="例如：煎蛋+吐司">
         </div>
-        .calendar-diff.down {
+
         <div class="modal-field">
           <label for="food-lunch">🍱 午餐</label>
           <input id="food-lunch" type="text" placeholder="例如：米饭+青菜+鸡胸">
-        .calendar-diff.flat {
+        </div>
 
         <div class="modal-field">
           <label for="food-dinner">🍜 晚餐</label>
@@ -788,7 +807,6 @@
     </div>
   </div>
 
-  <!-- 日期详情模态 -->
   <div id="detail-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <div class="modal-header">
