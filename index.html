@@ -198,8 +198,8 @@
     .calendar-actions {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      margin: 0 16px;
+      gap: clamp(10px, 3vw, 16px);
+      margin: 0 clamp(12px, 4vw, 16px);
     }
 
     .calendar-action {
@@ -207,13 +207,13 @@
       border: 1px solid rgba(229, 231, 235, 0.95);
       border-radius: 20px;
       background: #fff;
-      padding: 0 16px;
-      min-height: 56px;
+      padding: 0 clamp(12px, 3vw, 16px);
+      min-height: clamp(52px, 13vw, 58px);
       box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: clamp(8px, 2.4vw, 10px);
       font: inherit;
       font-weight: 700;
       color: var(--text);
@@ -229,8 +229,8 @@
     }
 
     .calendar-action .action-icon {
-      width: 34px;
-      height: 34px;
+      width: clamp(30px, 8vw, 34px);
+      height: clamp(30px, 8vw, 34px);
       border-radius: 50%;
       display: inline-flex;
       align-items: center;
@@ -248,6 +248,8 @@
       line-height: 1.1;
       font-size: 18px;
       font-weight: 700;
+      white-space: nowrap;
+      min-width: 0;
     }
 
     .calendar-action .action-subtext {
@@ -1637,6 +1639,51 @@
     const weightCancelBtns = [document.getElementById('weight-cancel'), document.getElementById('weight-cancel-2')];
     const calendarActionWeight = document.getElementById('calendar-action-weight');
     const calendarActionFood = document.getElementById('calendar-action-food');
+    const calendarActionButtons = [calendarActionWeight, calendarActionFood].filter(Boolean);
+    let actionTypographyFrame = null;
+
+    function fitActionLabel(button) {
+      const textEl = button && button.querySelector('.action-text');
+      if (!textEl) return;
+
+      const style = window.getComputedStyle(button);
+      const paddingLeft = parseFloat(style.paddingLeft || '0');
+      const paddingRight = parseFloat(style.paddingRight || '0');
+      const gap = parseFloat(style.gap || '0') || 0;
+      const buttonWidth = button.getBoundingClientRect().width;
+      const iconEl = button.querySelector('.action-icon');
+      const iconWidth = iconEl ? iconEl.getBoundingClientRect().width : 0;
+      const labelSpace = Math.max(0, buttonWidth - paddingLeft - paddingRight - iconWidth - gap);
+
+      if (!labelSpace) return;
+
+      const maxFontSize = 18;
+      const minFontSize = 13;
+      textEl.style.fontSize = `${maxFontSize}px`;
+      const naturalWidth = textEl.scrollWidth;
+
+      if (naturalWidth <= labelSpace) {
+        return;
+      }
+
+      const fittedSize = Math.max(minFontSize, Math.min(maxFontSize, maxFontSize * (labelSpace / naturalWidth)));
+      textEl.style.fontSize = `${fittedSize.toFixed(2)}px`;
+    }
+
+    function updateActionTypography() {
+      calendarActionButtons.forEach((button) => fitActionLabel(button));
+    }
+
+    function scheduleActionTypographyUpdate() {
+      if (actionTypographyFrame !== null) {
+        cancelAnimationFrame(actionTypographyFrame);
+      }
+
+      actionTypographyFrame = requestAnimationFrame(() => {
+        actionTypographyFrame = null;
+        updateActionTypography();
+      });
+    }
 
     function openWeightModal(preselectDate) {
       const now = new Date();
@@ -1698,6 +1745,15 @@
     if (calendarActionWeight) {
       calendarActionWeight.addEventListener('click', () => openWeightModal());
     }
+
+    scheduleActionTypographyUpdate();
+
+    if (window.ResizeObserver) {
+      const actionObserver = new ResizeObserver(() => scheduleActionTypographyUpdate());
+      actionObserver.observe(document.querySelector('.calendar-actions'));
+    }
+
+    window.addEventListener('resize', scheduleActionTypographyUpdate);
 
     // period toggle
     periodMorningBtn.addEventListener('click', () => {
