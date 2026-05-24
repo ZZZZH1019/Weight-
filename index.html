@@ -127,8 +127,8 @@
       border: 1px solid var(--cell-border);
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      justify-content: center;
+      gap: 4px;
+      justify-content: flex-start;
       align-items: center;
       overflow: hidden;
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -153,23 +153,27 @@
     }
 
     .calendar-date {
-      font-size: 12px;
+      font-size: clamp(12px, 4vw, 16px);
+      font-weight: 700;
       color: var(--muted);
       line-height: 1;
       max-width: 100%;
+      padding-top: 1px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .calendar-weight {
-      font-size: clamp(10px, 3vw, 14px);
-      font-weight: 600;
-      line-height: 1.15;
+      font-size: clamp(10px, 3vw, 12px);
+      font-weight: 700;
+      line-height: 1.1;
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .arrow {
@@ -367,7 +371,7 @@
       padding: 6px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       cursor: pointer;
       overflow: hidden;
@@ -380,19 +384,21 @@
     }
 
     .calendar-date {
-      font-size: 12px;
+      font-size: clamp(12px, 4vw, 16px);
       font-weight: 700;
       color: var(--text);
       line-height: 1;
       max-width: 100%;
+      padding-top: 1px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .calendar-weight {
-      margin-top: 6px;
-      font-size: clamp(10px, 3vw, 14px);
+      margin-top: 4px;
+      font-size: clamp(10px, 3vw, 12px);
       font-weight: 700;
       letter-spacing: -0.02em;
       line-height: 1.1;
@@ -400,10 +406,11 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .calendar-change {
-      margin-top: 6px;
+      margin-top: 4px;
       font-size: clamp(10px, 3vw, 12px);
       font-weight: 700;
       line-height: 1;
@@ -956,6 +963,51 @@
         cell.appendChild(changeEl);
         calendarGrid.appendChild(cell);
       }
+
+      scheduleCalendarTypographyUpdate();
+    }
+
+    let calendarTypographyFrame = null;
+
+    function updateCalendarTypography() {
+      if (!calendarGrid) return;
+
+      const cells = Array.from(calendarGrid.querySelectorAll('.calendar-cell:not(.is-empty)'));
+      if (!cells.length) return;
+
+      const sampleCell = cells[0];
+      const cellWidth = sampleCell.getBoundingClientRect().width;
+      if (!cellWidth) return;
+
+      const dateSize = Math.max(12, Math.min(16, cellWidth * 0.29));
+      const weightSize = Math.max(10, Math.min(12, cellWidth * 0.22));
+      const arrowSize = Math.max(10, Math.min(12, cellWidth * 0.20));
+
+      cells.forEach((cell) => {
+        const dateEl = cell.querySelector('.calendar-date');
+        const weightEl = cell.querySelector('.calendar-weight');
+        const changeEl = cell.querySelector('.calendar-change');
+
+        if (dateEl) {
+          dateEl.style.fontSize = `${dateSize.toFixed(1)}px`;
+        }
+        if (weightEl) {
+          weightEl.style.fontSize = `${weightSize.toFixed(1)}px`;
+        }
+        if (changeEl) {
+          changeEl.style.fontSize = `${arrowSize.toFixed(1)}px`;
+        }
+      });
+    }
+
+    function scheduleCalendarTypographyUpdate() {
+      if (calendarTypographyFrame !== null) {
+        cancelAnimationFrame(calendarTypographyFrame);
+      }
+      calendarTypographyFrame = requestAnimationFrame(() => {
+        calendarTypographyFrame = null;
+        updateCalendarTypography();
+      });
     }
 
     /* --- month picker logic --- */
@@ -1228,6 +1280,10 @@
       });
 
       localStorage.setItem(storageKey, tabName);
+
+      if (tabName === 'calendar') {
+        scheduleCalendarTypographyUpdate();
+      }
     }
 
     loadData();
@@ -1243,6 +1299,13 @@
       button.addEventListener('click', () => {
         setActiveTab(button.dataset.tab);
       });
+    });
+
+    window.addEventListener('resize', () => {
+      const activeCalendarPage = document.querySelector('.page[data-page="calendar"]');
+      if (activeCalendarPage && activeCalendarPage.classList.contains('is-active')) {
+        scheduleCalendarTypographyUpdate();
+      }
     });
 
     if (calendarPrevButton) {
