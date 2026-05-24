@@ -731,6 +731,51 @@
     #weight-modal-overlay { -webkit-overflow-scrolling: touch; }
     #weight-modal-overlay .modal { overflow: hidden; }
     #weight-modal-overlay .modal-body { overflow:auto; }
+    /* ===== Today's Food modal: mirror Today's Weight modal styles ===== */
+    #food-modal-overlay .modal {
+      width: 90vw;
+      max-width: 720px;
+      --modal-bg: rgba(255,255,255,0.90);
+      background: var(--modal-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 18px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      border: 1px solid rgba(var(--primary-rgb, 34,126,255), 0.06);
+      position: relative;
+      overflow: hidden;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ensure any decorative pseudo-element is hidden */
+    #food-modal-overlay .modal::before{ display: none !important; }
+
+    /* Header: center title, hide header textual buttons */
+    #food-modal-overlay .modal-header { justify-content:center; align-items:center; padding:8px 6px; gap:0; border-bottom:1px solid rgba(var(--primary-rgb,0,122,255),0.04); }
+    #food-modal-overlay .modal-header > button,
+    #food-modal-overlay .modal-header .modal-actions { display: none !important; }
+    #food-modal-overlay .modal-title { font-weight:800; font-size:18px; color:var(--text); text-align:center; }
+
+    /* Body scroll area */
+    #food-modal-overlay .modal-body { padding:12px 6px; overflow:auto; -webkit-overflow-scrolling:touch; }
+
+    /* Footer buttons (apply to actual footer buttons in HTML) */
+    #food-modal-overlay .modal-footer { display:flex; gap:12px; padding:12px 6px 6px; }
+    #food-modal-overlay .modal-footer button { flex:1; height:46px; border-radius:999px; font-weight:700; font-size:15px; cursor:pointer; transition: transform .12s ease, box-shadow .12s ease, opacity .12s; border:0; }
+    #food-modal-overlay .modal-footer button#food-cancel-2 { background:#f0f0f0; color:#333; }
+    #food-modal-overlay .modal-footer button#food-save-2 { background: linear-gradient(90deg, var(--primary), var(--primary-dark, var(--primary))); color:#fff; box-shadow: 0 12px 28px rgba(0,0,0,0.12); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    #food-modal-overlay .modal-footer button:active { transform: scale(0.985); }
+
+    /* Slide-up open animation */
+    #food-modal-overlay.open .modal { animation: modal-slide-up .34s cubic-bezier(.2,.9,.28,1); }
+
+    /* Ensure inner scrolling only */
+    #food-modal-overlay { -webkit-overflow-scrolling: touch; }
+    #food-modal-overlay .modal { overflow: hidden; }
+    #food-modal-overlay .modal-body { overflow:auto; }
   </style>
 </head>
 <body>
