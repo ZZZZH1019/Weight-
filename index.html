@@ -269,6 +269,8 @@
       background: transparent;
       box-shadow: none;
       flex: 0 0 auto;
+      /* ensure svg sits cleanly in the icon box */
+      vertical-align: middle;
     }
 
     /* SVG icons should follow current theme primary color */
@@ -280,9 +282,10 @@
     .calendar-action .action-text {
       display: inline-flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center; /* center title under icon horizontally */
+      text-align: center;
       line-height: 1.1;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       white-space: nowrap;
       min-width: 0;
@@ -1865,7 +1868,7 @@
 
       if (!labelSpace) return;
 
-      const maxFontSize = 18;
+      const maxFontSize = 16;
       const minFontSize = 13;
       textEl.style.fontSize = `${maxFontSize}px`;
       const naturalWidth = textEl.scrollWidth;
