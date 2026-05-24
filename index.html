@@ -773,6 +773,7 @@
       border: 1px solid rgba(var(--primary-rgb, 34,126,255), 0.06);
       position: relative;
       overflow: hidden;
+      height: min(76vh, calc(100vh - 48px));
       max-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -804,6 +805,164 @@
     #food-modal-overlay { -webkit-overflow-scrolling: touch; }
     #food-modal-overlay .modal { overflow: hidden; }
     #food-modal-overlay .modal-body { overflow:auto; }
+
+    /* ===== Today's Detail modal: unify with weight/food modal ===== */
+    #detail-modal-overlay .modal {
+      width: 90vw;
+      max-width: 720px;
+      --modal-bg: rgba(255,255,255,0.90);
+      background: var(--modal-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 18px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      border: 1px solid rgba(var(--primary-rgb, 34,126,255), 0.06);
+      position: relative;
+      overflow: hidden;
+      height: min(76vh, calc(100vh - 48px));
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #detail-modal-overlay .modal::before { display: none !important; }
+
+    #detail-modal-overlay .modal-header {
+      justify-content: center;
+      align-items: center;
+      padding: 8px 6px;
+      gap: 0;
+      border-bottom: 1px solid rgba(var(--primary-rgb,0,122,255),0.04);
+    }
+
+    #detail-modal-overlay .modal-title {
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--text);
+      text-align: center;
+    }
+
+    #detail-modal-overlay .modal-body {
+      padding: 12px 6px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(156, 163, 175, 0.22) transparent;
+    }
+
+    #detail-modal-overlay .modal-body::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    #detail-modal-overlay .modal-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #detail-modal-overlay .modal-body::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.22);
+      border-radius: 999px;
+    }
+
+    #detail-modal-overlay .modal-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.34);
+    }
+
+    #detail-modal-overlay .modal-field {
+      margin: 0;
+    }
+
+    #detail-modal-overlay .modal-field > label {
+      display: block;
+      font-size: 13px;
+      line-height: 1.3;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    #detail-modal-overlay .modal-field input[type="number"],
+    #detail-modal-overlay .modal-field input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font: inherit;
+      font-size: 15px;
+      background: rgba(255,255,255,0.72);
+      color: var(--text);
+      box-sizing: border-box;
+    }
+
+    #detail-modal-overlay .modal-field input[type="number"]:focus,
+    #detail-modal-overlay .modal-field input[type="text"]:focus {
+      outline: none;
+      border-color: color-mix(in srgb, var(--primary) 36%, var(--border));
+      box-shadow: 0 0 0 3px rgba(var(--primary-rgb,0,122,255),0.10);
+    }
+
+    #detail-modal-overlay .modal-body hr {
+      width: 100%;
+      border: 0;
+      height: 1px;
+      margin: 6px 0 2px;
+      background: rgba(var(--border-rgb), 0.7);
+    }
+
+    #detail-modal-overlay .modal-footer {
+      display: flex;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 12px 6px 6px;
+      margin-top: 0;
+    }
+
+    #detail-modal-overlay .modal-footer button {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 46px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s;
+      border: 0;
+      padding: 0;
+    }
+
+    #detail-modal-overlay .modal-footer button#detail-delete {
+      background: #dc2626;
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(220,38,38,0.16);
+    }
+
+    #detail-modal-overlay .modal-footer button#detail-cancel-2 {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    #detail-modal-overlay .modal-footer button#detail-save-2 {
+      background: linear-gradient(90deg, var(--primary), var(--primary-dark, var(--primary)));
+      color: #fff;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    #detail-modal-overlay .modal-footer button:active {
+      transform: scale(0.985);
+    }
+
+    #detail-modal-overlay.open .modal {
+      animation: modal-slide-up .34s cubic-bezier(.2,.9,.28,1);
+    }
+
+    #detail-modal-overlay { -webkit-overflow-scrolling: touch; }
+    #detail-modal-overlay .modal { overflow: hidden; }
   </style>
 </head>
 <body>
@@ -1002,7 +1161,7 @@
   <div id="detail-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <div class="modal-header">
-        <div class="modal-title" id="detail-modal-title">日期详情</div>
+        <div class="modal-title" id="detail-modal-title">今日详情</div>
       </div>
 
       <div class="modal-body">
@@ -1032,29 +1191,27 @@
         <hr>
 
         <div class="modal-field">
-          <label>🍳 早餐</label>
+          <label>早餐</label>
           <input id="detail-food-breakfast" type="text">
         </div>
         <div class="modal-field">
-          <label>🍱 午餐</label>
+          <label>午餐</label>
           <input id="detail-food-lunch" type="text">
         </div>
         <div class="modal-field">
-          <label>🍜 晚餐</label>
+          <label>晚餐</label>
           <input id="detail-food-dinner" type="text">
         </div>
         <div class="modal-field">
-          <label>💊 保健品</label>
+          <label>保健品</label>
           <input id="detail-food-supplements" type="text">
         </div>
       </div>
 
-      <div class="modal-footer" style="justify-content:space-between;">
-        <button id="detail-delete" type="button" style="color:#fff;background:#dc2626;border-radius:10px;padding:8px 12px;border:0;">删除当天数据</button>
-        <div>
-          <button id="detail-cancel-2" type="button">取消</button>
-          <button id="detail-save-2" type="button">保存</button>
-        </div>
+      <div class="modal-footer">
+        <button id="detail-delete" type="button">清空</button>
+        <button id="detail-cancel-2" type="button">取消</button>
+        <button id="detail-save-2" type="button">保存</button>
       </div>
     </div>
   </div>
