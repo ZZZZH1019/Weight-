@@ -635,8 +635,8 @@
     #weight-modal-overlay .modal {
       width: 90vw;
       max-width: 720px;
-      background: rgba(255,255,255,0.90);
-      background-image: none;
+      --modal-bg: rgba(255,255,255,0.90);
+      background: var(--modal-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-radius: 28px;
@@ -650,16 +650,8 @@
       flex-direction: column;
     }
 
-    #weight-modal-overlay .modal::before{
-      content: '';
-      position: absolute;
-      left: 0; right: 0; top: 0;
-      height: 6px;
-      background: linear-gradient(90deg, var(--primary), var(--primary-dark, var(--primary)));
-      opacity: 0.14;
-      border-radius: 28px 28px 0 0;
-      pointer-events: none;
-    }
+    /* removed decorative top accent for clarity */
+    #weight-modal-overlay .modal::before{ display: none !important; }
 
     /* Header: center title, hide header textual buttons */
     #weight-modal-overlay .modal-header { justify-content:center; align-items:center; padding:8px 6px; gap:0; border-bottom:1px solid rgba(var(--primary-rgb,0,122,255),0.04); }
