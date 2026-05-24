@@ -226,7 +226,8 @@
     .calendar-actions {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: clamp(10px, 3vw, 16px);
+      /* base gap plus extra 18px to separate the two action buttons (10px previous + 8px more) */
+      gap: calc(clamp(10px, 3vw, 16px) + 18px);
       /* move the action buttons 10px further from the calendar without changing the calendar position */
       margin: 10px clamp(12px, 4vw, 16px);
     }
