@@ -87,28 +87,57 @@
       min-height: 0;
     }
 
-    .calendar {
+        --chart-evening: #16a34a; /* Evening chart color */
+        /* Modal theming variables (use these to style all modals consistently) */
+        --modal-bg: rgba(255,255,255,0.96);
+        --modal-text: #0b0b0b;
+        --modal-accent: var(--primary);
+        --modal-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        --modal-border: rgba(0,0,0,0.06);
+        /* RGB helpers (optional, used elsewhere) */
+        --primary-rgb: 37,99,235;
+        --border-rgb: 229,231,235;
       display: flex;
+
+      /* Dark theme overrides: apply by adding `.theme-dark` to <body> or root container */
+      .theme-dark {
+        --bg: #0b0b0d;
+        --panel: #111214;
+        --text: #e6eef8;
+        --muted: #9aa4b2;
+        --border: #16181a;
+        --primary: #60a5fa;
+        --primary-soft: rgba(96,165,250,0.12);
+        --shadow: 0 12px 30px rgba(0,0,0,0.6);
+        --modal-bg: rgba(18,18,20,0.85);
+        --modal-text: #ececec;
+        --modal-accent: var(--primary);
+        --modal-shadow: 0 12px 30px rgba(0,0,0,0.6);
+        --modal-border: rgba(255,255,255,0.04);
+        --primary-rgb: 96,165,250;
+        --border-rgb: 20,20,22;
+      }
       flex-direction: column;
-      gap: 10px;
-    }
-
-    .calendar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .month-title {
-      font-weight: 600;
+        width: min(520px, calc(100vw - 32px));
+        max-width: 520px;
+        background: var(--modal-bg, var(--panel));
+        color: var(--modal-text, var(--text));
+        border: 1px solid var(--modal-border);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: var(--modal-shadow);
+        max-height: min(90vh, calc(100vh - 32px));
+        overflow-y: auto;
+        -webkit-backdrop-filter: blur(4px);
+        backdrop-filter: blur(4px);
+        position: relative;
       font-size: 16px;
     }
-
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
+        height: 4px;
+        border-radius: 8px 8px 0 0;
+        background: color-mix(in srgb, var(--modal-accent, var(--primary)) 70%, white 30%);
+        margin: -16px -16px 12px -16px;
+        opacity: 0.12;
       width: 100%;
       max-width: 100%;
     }
@@ -819,11 +848,7 @@
   <div id="weight-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <div class="modal-header">
-        <button id="weight-cancel" type="button">取消</button>
         <div class="modal-title">记录体重</div>
-        <div class="modal-actions">
-          <button id="weight-save" type="button">保存</button>
-        </div>
       </div>
 
       <div class="modal-body">
@@ -861,11 +886,7 @@
   <div id="food-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <div class="modal-header">
-        <button id="food-cancel" type="button">取消</button>
         <div class="modal-title">今日饮食</div>
-        <div class="modal-actions">
-          <button id="food-save" type="button">保存</button>
-        </div>
       </div>
 
       <div class="modal-body">
@@ -905,11 +926,7 @@
   <div id="detail-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <div class="modal-header">
-        <button id="detail-cancel" type="button">取消</button>
         <div class="modal-title" id="detail-modal-title">日期详情</div>
-        <div class="modal-actions">
-          <button id="detail-save" type="button">保存</button>
-        </div>
       </div>
 
       <div class="modal-body">
@@ -1246,8 +1263,8 @@
     const detailFoodLunch = document.getElementById('detail-food-lunch');
     const detailFoodDinner = document.getElementById('detail-food-dinner');
     const detailFoodSupplements = document.getElementById('detail-food-supplements');
-    const detailSaveBtns = [document.getElementById('detail-save'), document.getElementById('detail-save-2')];
-    const detailCancelBtns = [document.getElementById('detail-cancel'), document.getElementById('detail-cancel-2')];
+    const detailSaveBtns = [document.getElementById('detail-save-2')];
+    const detailCancelBtns = [document.getElementById('detail-cancel-2')];
     const detailDeleteBtn = document.getElementById('detail-delete');
 
     let currentDetailDate = null;
@@ -1778,8 +1795,9 @@
     const periodEveningBtn = document.getElementById('period-evening');
     const weightInput = document.getElementById('weight-input');
     const weightNote = document.getElementById('weight-note');
-    const weightSaveBtns = [document.getElementById('weight-save'), document.getElementById('weight-save-2')];
-    const weightCancelBtns = [document.getElementById('weight-cancel'), document.getElementById('weight-cancel-2')];
+    // Use footer action buttons only (header buttons removed for semantic clarity)
+    const weightSaveBtns = [document.getElementById('weight-save-2')];
+    const weightCancelBtns = [document.getElementById('weight-cancel-2')];
     const calendarActionWeight = document.getElementById('calendar-action-weight');
     const calendarActionFood = document.getElementById('calendar-action-food');
     const calendarActionButtons = [calendarActionWeight, calendarActionFood].filter(Boolean);
@@ -1955,8 +1973,8 @@
     const foodLunch = document.getElementById('food-lunch');
     const foodDinner = document.getElementById('food-dinner');
     const foodSupplements = document.getElementById('food-supplements');
-    const foodSaveBtns = [document.getElementById('food-save'), document.getElementById('food-save-2')];
-    const foodCancelBtns = [document.getElementById('food-cancel'), document.getElementById('food-cancel-2')];
+    const foodSaveBtns = [document.getElementById('food-save-2')];
+    const foodCancelBtns = [document.getElementById('food-cancel-2')];
 
     function openFoodModal(preselectDate) {
       const now = new Date();
