@@ -120,15 +120,15 @@
     }
 
     .calendar-cell {
-      aspect-ratio: 1 / 1;
-      border-radius: 12px;
-      padding: 6px;
+      aspect-ratio: 1 / 1.2;
+      border-radius: 8px;
+      padding: 8px 6px;
       background: #fff;
-      border: 1px solid var(--cell-border);
+      border: 0;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      justify-content: flex-start;
+      gap: 2px;
+      justify-content: center;
       align-items: center;
       overflow: hidden;
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -139,16 +139,16 @@
     .calendar-cell.inactive {
       opacity: 0.5;
       background: transparent;
-      border-style: dashed;
+      border: 0;
     }
 
     .calendar-cell.today {
       background: var(--primary-soft);
-      border-color: color-mix(in srgb, var(--primary) 38%, white);
+      border: 1px solid color-mix(in srgb, var(--primary) 38%, white);
     }
 
     .calendar-cell.today .calendar-date,
-    .calendar-cell.today .calendar-weight {
+    .calendar-cell.today .calendar-diff {
       color: var(--primary);
     }
 
@@ -158,19 +158,18 @@
       color: var(--muted);
       line-height: 1;
       max-width: 100%;
-      padding-top: 1px;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      overflow: visible;
+      text-overflow: clip;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
 
-    .calendar-weight {
+    .calendar-diff {
       font-size: clamp(10px, 3vw, 12px);
       font-weight: 700;
       line-height: 1.1;
       max-width: 100%;
-      overflow: hidden;
+      overflow: visible;
       text-overflow: ellipsis;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
@@ -372,23 +371,23 @@
     }
 
     .calendar-cell {
-      aspect-ratio: 1 / 1;
-      border: 1px solid var(--cell-border);
-      border-radius: 16px;
+      aspect-ratio: 1 / 1.2;
+      border-radius: 8px;
       background: var(--cell-bg);
-      padding: 6px;
+      padding: 8px 6px;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
+      justify-content: center;
       align-items: center;
       cursor: pointer;
       overflow: hidden;
       min-width: 0;
+      border: 0;
     }
 
     .calendar-cell.is-empty {
       background: transparent;
-      border-color: transparent;
+      border: 0;
     }
 
     .calendar-date {
@@ -397,24 +396,41 @@
       color: var(--text);
       line-height: 1;
       max-width: 100%;
-      padding-top: 1px;
-      overflow: hidden;
+      overflow: visible;
+      text-overflow: clip;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .calendar-diff {
+      font-size: clamp(10px, 3vw, 12px);
+      font-weight: 700;
+      line-height: 1.1;
+      max-width: 100%;
+      overflow: visible;
       text-overflow: ellipsis;
       white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
 
-    .calendar-weight {
-      margin-top: 4px;
-      font-size: clamp(10px, 3vw, 12px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-variant-numeric: tabular-nums;
+    .calendar-diff.morning {
+      margin-top: 1px;
+    }
+
+    .calendar-diff.evening {
+      margin-top: 0;
+    }
+
+    .calendar-diff.up {
+      color: #dc2626;
+    }
+
+    .calendar-diff.down {
+      color: #16a34a;
+    }
+
+    .calendar-diff.flat {
+      color: #9ca3af;
     }
 
     .calendar-change {
@@ -422,18 +438,6 @@
       font-size: clamp(10px, 3vw, 12px);
       font-weight: 700;
       line-height: 1;
-    }
-
-    .calendar-change.up {
-      color: #dc2626;
-    }
-
-    .calendar-change.down {
-      color: #16a34a;
-    }
-
-    .calendar-change.flat {
-      color: #9ca3af;
     }
 
     .tab-bar {
@@ -706,23 +710,23 @@
         <button id="weight-cancel" type="button">取消</button>
         <div class="modal-title">记录体重</div>
         <div class="modal-actions">
-          <button id="weight-save" type="button">保存</button>
-        </div>
+          aspect-ratio: 1 / 1.2;
       </div>
 
-      <div class="modal-body">
+          padding: 8px 6px;
         <div class="modal-field">
           <label for="weight-date">日期</label>
-          <input id="weight-date" type="date">
+          justify-content: center;
         </div>
 
         <div class="modal-field">
           <label>时间段</label>
+          border: 0;
           <div class="segmented" role="tablist" aria-label="时间段选择">
             <button id="period-morning" type="button" data-period="morning" class="active">早上</button>
             <button id="period-evening" type="button" data-period="evening">晚上</button>
           </div>
-        </div>
+          border: 0;
 
         <div class="modal-field">
           <label for="weight-input">体重 (kg)</label>
@@ -731,42 +735,40 @@
 
         <div class="modal-field">
           <label for="weight-note">备注（可选）</label>
-          <textarea id="weight-note" rows="2" placeholder="输入备注"></textarea>
-        </div>
-      </div>
+          overflow: visible;
+          text-overflow: clip;
 
       <div class="modal-footer">
         <button id="weight-cancel-2" type="button">取消</button>
         <button id="weight-save-2" type="button">保存</button>
-      </div>
-    </div>
-  </div>
+        .calendar-diff {
+          font-size: clamp(10px, 3vw, 12px);
 
-  <div id="food-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <div class="modal-header">
-        <button id="food-cancel" type="button">取消</button>
+          overflow: visible;
         <div class="modal-title">今日饮食</div>
         <div class="modal-actions">
           <button id="food-save" type="button">保存</button>
         </div>
       </div>
-
-      <div class="modal-body">
-        <div class="modal-field">
-          <label for="food-date">日期</label>
-          <input id="food-date" type="date">
+        .calendar-diff.morning {
+          margin-top: 1px;
         </div>
 
-        <div class="modal-field">
+        .calendar-diff.evening {
+          margin-top: 0;
+        }
+
+        .calendar-diff.up {
           <label for="food-breakfast">🍳 早餐</label>
           <input id="food-breakfast" type="text" placeholder="例如：煎蛋+吐司">
         </div>
-
+        .calendar-diff.down {
         <div class="modal-field">
           <label for="food-lunch">🍱 午餐</label>
           <input id="food-lunch" type="text" placeholder="例如：米饭+青菜+鸡胸">
-        </div>
+        .calendar-diff.flat {
 
         <div class="modal-field">
           <label for="food-dinner">🍜 晚餐</label>
@@ -918,6 +920,20 @@
       return { symbol: '—', className: 'flat' };
     }
 
+    function getWeightDelta(currentWeight, previousWeight) {
+      if (currentWeight === null || currentWeight === undefined || previousWeight === null || previousWeight === undefined) {
+        return { text: '—', className: 'flat' };
+      }
+
+      const delta = Number(currentWeight) - Number(previousWeight);
+      const signedDelta = delta > 0 ? `+${delta.toFixed(2)}` : delta < 0 ? delta.toFixed(2) : '0.00';
+
+      return {
+        text: signedDelta,
+        className: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
+      };
+    }
+
     function renderCalendar() {
       if (!calendarGrid || !calendarMonthLabel) {
         return;
@@ -942,10 +958,19 @@
         const currentDate = new Date(year, month, day);
         const dateKey = toDateKey(currentDate);
         const record = weightRecords[dateKey];
+        const previousDate = new Date(currentDate);
+        previousDate.setDate(previousDate.getDate() - 1);
+        const previousRecord = weightRecords[toDateKey(previousDate)] || {};
+
         const morningWeight = record && record.morning !== null && record.morning !== undefined && record.morning !== ''
           ? Number(record.morning)
           : null;
-        const change = morningWeight === null ? { symbol: '—', className: 'flat' } : getWeightChange(morningWeight, getPreviousDayWeight(currentDate));
+        const eveningWeight = record && record.evening !== null && record.evening !== undefined && record.evening !== ''
+          ? Number(record.evening)
+          : null;
+
+        const morningDelta = morningWeight === null ? { text: '—', className: 'flat' } : getWeightDelta(morningWeight, previousRecord.morning);
+        const eveningDelta = eveningWeight === null ? { text: '—', className: 'flat' } : getWeightDelta(eveningWeight, previousRecord.evening);
 
         const cell = document.createElement('div');
         cell.className = 'calendar-cell';
@@ -962,17 +987,17 @@
         dateEl.className = 'calendar-date';
         dateEl.textContent = day;
 
-        const weightEl = document.createElement('div');
-        weightEl.className = 'calendar-weight';
-        weightEl.textContent = morningWeight === null ? '' : morningWeight.toFixed(1);
+        const morningDeltaEl = document.createElement('div');
+        morningDeltaEl.className = `calendar-diff morning ${morningDelta.className}`;
+        morningDeltaEl.textContent = morningDelta.text;
 
-        const changeEl = document.createElement('div');
-        changeEl.className = `calendar-change ${change.className}`;
-        changeEl.textContent = morningWeight === null ? '' : change.symbol;
+        const eveningDeltaEl = document.createElement('div');
+        eveningDeltaEl.className = `calendar-diff evening ${eveningDelta.className}`;
+        eveningDeltaEl.textContent = eveningDelta.text;
 
         cell.appendChild(dateEl);
-        cell.appendChild(weightEl);
-        cell.appendChild(changeEl);
+        cell.appendChild(morningDeltaEl);
+        cell.appendChild(eveningDeltaEl);
         calendarGrid.appendChild(cell);
       }
 
@@ -992,23 +1017,18 @@
       if (!cellWidth) return;
 
       const dateSize = Math.max(12, Math.min(16, cellWidth * 0.29));
-      const weightSize = Math.max(10, Math.min(12, cellWidth * 0.22));
-      const arrowSize = Math.max(10, Math.min(12, cellWidth * 0.20));
+      const diffSize = Math.max(10, Math.min(12, cellWidth * 0.20));
 
       cells.forEach((cell) => {
         const dateEl = cell.querySelector('.calendar-date');
-        const weightEl = cell.querySelector('.calendar-weight');
-        const changeEl = cell.querySelector('.calendar-change');
+        const diffEls = Array.from(cell.querySelectorAll('.calendar-diff'));
 
         if (dateEl) {
           dateEl.style.fontSize = `${dateSize.toFixed(1)}px`;
         }
-        if (weightEl) {
-          weightEl.style.fontSize = `${weightSize.toFixed(1)}px`;
-        }
-        if (changeEl) {
-          changeEl.style.fontSize = `${arrowSize.toFixed(1)}px`;
-        }
+        diffEls.forEach((diffEl) => {
+          diffEl.style.fontSize = `${diffSize.toFixed(1)}px`;
+        });
       });
     }
 
