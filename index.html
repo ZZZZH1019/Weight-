@@ -1792,9 +1792,99 @@
       return { labels, morningData, eveningData };
     }
 
+    function getChartThemeTokens() {
+      const styles = getComputedStyle(document.documentElement);
+
+      return {
+        morning: styles.getPropertyValue('--chart-morning').trim() || '#4381C1',
+        evening: styles.getPropertyValue('--chart-evening').trim() || '#6aa7e8',
+        primary: styles.getPropertyValue('--primary').trim() || '#4381C1',
+        panel: styles.getPropertyValue('--panel').trim() || '#ffffff',
+        text: styles.getPropertyValue('--text').trim() || '#1f2937',
+        muted: styles.getPropertyValue('--muted').trim() || '#6b7280',
+        border: styles.getPropertyValue('--border').trim() || '#e5e7eb',
+        primaryRgb: styles.getPropertyValue('--primary-rgb').trim() || '67,129,193',
+      };
+    }
+
+    function createChartOptions() {
+      const theme = getChartThemeTokens();
+
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        elements: {
+          line: {
+            borderWidth: 2.5,
+            tension: 0.32,
+          },
+          point: {
+            radius: 0,
+            hoverRadius: 5,
+            hitRadius: 12,
+            borderWidth: 2,
+          },
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: theme.muted,
+              maxRotation: 0,
+              autoSkip: true,
+            },
+            grid: {
+              color: 'rgba(148,163,184,0.10)',
+              drawBorder: false,
+            },
+            border: {
+              color: 'rgba(148,163,184,0.18)',
+            },
+          },
+          y: {
+            ticks: {
+              color: theme.muted,
+              callback: (value) => `${value}`,
+            },
+            grid: {
+              color: 'rgba(148,163,184,0.10)',
+              drawBorder: false,
+            },
+            border: {
+              color: 'rgba(148,163,184,0.18)',
+            },
+            title: {
+              display: true,
+              text: 'kg',
+              color: theme.muted,
+            },
+          },
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: theme.text,
+              usePointStyle: true,
+              pointStyle: 'line',
+              boxWidth: 12,
+              boxHeight: 12,
+            },
+          },
+          tooltip: {
+            enabled: false,
+          },
+        },
+      };
+    }
+
     function createChart() {
       if (!chartCtx) return;
       const initial = buildDatasets('week');
+      const theme = getChartThemeTokens();
       weightChart = new Chart(chartCtx, {
         type: 'line',
         data: {
@@ -1803,31 +1893,29 @@
             {
               label: '早体重',
               data: initial.morningData,
-              borderColor: '#2563eb',
-              backgroundColor: 'rgba(37,99,235,0.08)',
-              tension: 0.2,
+              borderColor: theme.morning,
+              backgroundColor: `${theme.morning}1A`,
               spanGaps: true,
+              pointHoverBackgroundColor: theme.panel,
+              pointHoverBorderColor: theme.morning,
+              pointBackgroundColor: theme.morning,
+              pointBorderColor: theme.panel,
             },
             {
               label: '晚体重',
               data: initial.eveningData,
-              borderColor: '#16a34a',
-              backgroundColor: 'rgba(16,163,76,0.06)',
-              tension: 0.2,
+              borderColor: theme.evening,
+              backgroundColor: `${theme.evening}14`,
               spanGaps: true,
+              pointHoverBackgroundColor: theme.panel,
+              pointHoverBorderColor: theme.evening,
+              pointBackgroundColor: theme.evening,
+              pointBorderColor: theme.panel,
               hidden: !toggleEvening || !toggleEvening.checked,
             }
           ]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: { display: true },
-            y: { display: true, title: { display: true, text: 'kg' } }
-          },
-          plugins: { legend: { position: 'top' } }
-        }
+        options: createChartOptions()
       });
     }
 
@@ -1858,8 +1946,14 @@
       document.getElementById('current-theme-name') && (document.getElementById('current-theme-name').textContent = t.name + ' (' + name + ')');
       // update chart colors
       if (weightChart) {
+        const theme = getChartThemeTokens();
         weightChart.data.datasets[0].borderColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-morning').trim() || t.chartMorning;
         weightChart.data.datasets[1].borderColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-evening').trim() || t.chartEvening;
+        weightChart.data.datasets[0].backgroundColor = `${theme.morning}1A`;
+        weightChart.data.datasets[1].backgroundColor = `${theme.evening}14`;
+        weightChart.data.datasets[0].pointHoverBorderColor = theme.morning;
+        weightChart.data.datasets[1].pointHoverBorderColor = theme.evening;
+        weightChart.options = createChartOptions();
         weightChart.update();
       }
     }
@@ -1982,13 +2076,21 @@
 
     function updateChart() {
       if (!weightChart) { createChart(); return; }
+      const theme = getChartThemeTokens();
       const active = rangeButtons.find(b => b.classList.contains('active')) || rangeButtons[0];
       const range = active ? active.dataset.range : 'week';
       const d = buildDatasets(range);
       weightChart.data.labels = d.labels;
       weightChart.data.datasets[0].data = d.morningData;
       weightChart.data.datasets[1].data = d.eveningData;
+      weightChart.data.datasets[0].borderColor = theme.morning;
+      weightChart.data.datasets[1].borderColor = theme.evening;
+      weightChart.data.datasets[0].backgroundColor = `${theme.morning}1A`;
+      weightChart.data.datasets[1].backgroundColor = `${theme.evening}14`;
+      weightChart.data.datasets[0].pointHoverBorderColor = theme.morning;
+      weightChart.data.datasets[1].pointHoverBorderColor = theme.evening;
       weightChart.data.datasets[1].hidden = !(toggleEvening && toggleEvening.checked);
+      weightChart.options = createChartOptions();
       weightChart.update();
     }
 
